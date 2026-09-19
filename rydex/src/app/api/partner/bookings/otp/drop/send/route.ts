@@ -21,7 +21,7 @@ export async function POST(req:NextRequest) {
         await booking.save()
 
         if(booking.user.email){
-            await sendMail(booking.user.email,"Your Drop OTP - RYDEX", 
+            await sendMail(booking.user.email,"Your Drop OTP - RideSync",
                 `
         <div style="font-family:sans-serif;padding:20px">
           <h2>Ride OTP</h2>
@@ -36,7 +36,7 @@ export async function POST(req:NextRequest) {
 
           <br/>
 
-          <b>RYDEX</b>
+          <b>RideSync</b>
         </div>
         `)
         }

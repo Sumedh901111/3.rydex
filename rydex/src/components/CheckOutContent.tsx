@@ -15,7 +15,7 @@ const VEHICLE_META: any = {
   truck: { label: "Truck", Icon: Truck },
 };
 type Status = "idle" | "requested" | "awaiting_payment"
-  | "rejected" | "expired" 
+  | "rejected" | "expired"
   | "payment" | "confirmed";
 function CheckOutContent() {
   const router = useRouter()
@@ -124,7 +124,7 @@ function CheckOutContent() {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           amount: data.amount,
           currency: "INR",
-          name: "RYDEX",
+          name: "RideSync",
           description: "Ride Payment",
           order_id: data.orderId,
           handler: async function (response: any) {
@@ -516,10 +516,10 @@ initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ dela
                     </div>
 
                     <motion.button
-                    initial={{ opacity: 0, y: 8 }} 
-                    animate={{ opacity: 1, y: 0 }} 
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                      whileTap={{ scale: 0.97 }} 
+                      whileTap={{ scale: 0.97 }}
                       whileHover={{ scale: 1.03 }}
                       onClick={() => { window.location.href = `/ride/${booking._id}`; }}
                       className="flex items-center gap-2.5 bg-zinc-900 hover:bg-black text-white font-black text-sm px-8 py-4 rounded-2xl transition-colors shadow-md"

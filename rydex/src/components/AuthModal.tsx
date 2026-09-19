@@ -114,7 +114,7 @@ function AuthModal({ open, onClose }: propType) {
                                     <X size={20} />
                                 </div>
                                 <div className='mb-6 text-center'>
-                                    <h1 className='text-3xl font-extrabold tracking-widest'>RYDEX</h1>
+                                    <h1 className='text-3xl font-extrabold tracking-widest'>RideSync</h1>
                                     <p className='mt-1 text-xs text-gray-500'>Premium Vehicle Booking</p>
                                 </div>
 
