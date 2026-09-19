@@ -8,11 +8,27 @@ import http from "http"
 import { Server } from "socket.io"
 import User from "./models/user.model.js"
 const connectDb=async () => {
+    if (!mongodbUrl) {
+        throw new Error("MONGODB_URL is not configured")
+    }
+
+    let mongoHost = "invalid MongoDB URL"
     try {
-        await mongoose.connect(mongodbUrl)
+        mongoHost = new URL(mongodbUrl).hostname
+    } catch {
+        // Mongoose reports the detailed parsing error below.
+    }
+
+    try {
+        await mongoose.connect(mongodbUrl, {
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 5000,
+        })
         console.log("db connected")
     } catch (error) {
-        console.log("db error")
+        const message = error instanceof Error ? error.message : "unknown connection error"
+        console.error(`[mongodb] connection failed for ${mongoHost}: ${message}`)
+        throw error
     }
 }
 
@@ -34,7 +50,7 @@ try {
     if(user.socketId){
 io.to(user.socketId).emit(event,data)
     }
-    
+
     return res.json({success:true})
 } catch (error) {
     return res.json({success:false})
@@ -42,7 +58,7 @@ io.to(user.socketId).emit(event,data)
 })
 
 io.on("connection",(socket)=>{
-  
+
    socket.on("identity",async (userId)=>{
       socket.userId=userId
       await User.findByIdAndUpdate(userId,{
@@ -94,5 +110,7 @@ await User.findByIdAndUpdate(socket.userId,{
 
 server.listen(port,()=>{
     console.log("server started")
-    connectDb()
+    connectDb().catch(() => {
+        server.close(() => process.exit(1))
+    })
 })
