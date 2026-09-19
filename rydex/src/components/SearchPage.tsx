@@ -6,11 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 const SearchMap=dynamic(() => import("@/components/SearchMap"), { ssr: false })
 import axios from 'axios'
-import Vehicle, {  vehicleType } from '@/models/vehicle.model'
+import { vehicleType } from '@/models/vehicle.model'
 import VehicleCard from '@/components/VehicleCard'
 
 
-const VEHICLE_META: any = {
+const VEHICLE_META: Record<string, { label: string, Icon: typeof Bike }> = {
     bike: { label: "Bike", Icon: Bike },
     auto: { label: "Auto", Icon: Car },
     car: { label: "Car", Icon: Car },
@@ -34,6 +34,12 @@ const VEHICLE_META: any = {
     updatedAt:Date
 
 }
+interface IFarePricing {
+    type: vehicleType
+    baseFare?: number
+    pricePerKM?: number
+    waitingCharge?: number
+}
 function SearchPage() {
     const router = useRouter()
     const params = useSearchParams()
@@ -47,6 +53,7 @@ function SearchPage() {
     const dropLon = Number(params.get("droplon"))
     const vehicle = params.get("vehicle") || ""
     const [vehicles, setVehicles] = useState<IVehicle[]>([])
+    const [farePricing, setFarePricing] = useState<Record<string, IFarePricing>>({})
     const [loading, setLoading] = useState(false)
     const meta = VEHICLE_META[vehicle]
     const getNearByVehicles = async (latitude: number, longitude: number, vehicleType: string | null) => {
@@ -55,7 +62,8 @@ function SearchPage() {
             const { data } = await axios.post("/api/vehicles/near-by", {
                 latitude, longitude, vehicleType
             })
-            setVehicles(data)
+            setVehicles(data.vehicles ?? [])
+            setFarePricing(data.pricing ?? {})
             setLoading(false)
         } catch (error) {
             console.log(error)
@@ -147,12 +155,15 @@ function SearchPage() {
                                         ?
                                         "Available"
                                         :
-                                        "No Nearby Vehicles"
+                                        "Fare Estimate"
                                 }
                             </h2>
                             {
                                 meta && <div className='text-zinc-400 text-xs mt-0.5'>
-                                    {meta.label} rides near your pickup
+                                    {vehicles.length > 0
+                                        ? `${meta?.label ?? "Vehicle"} rides near your pickup`
+                                        : `No ${meta?.label ?? "vehicle"} currently available`
+                                    }
                                 </div>
                             }
                         </div>
@@ -205,14 +216,27 @@ function SearchPage() {
                                 <div className='w-20 h-20 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center mb-4'>
                                     <Search size={26} className="text-zinc-400" />
                                 </div>
-                                <p className='text-zinc-900 font-bold text-base mb-1'>Vehicles Not Found</p>
-                                <p className='text-zinc-400 text-sm max-w-xs leading-relaxed'>{meta.label || "Vehicle"} drivers are available near your pickup right now.</p>
+                                <p className='text-zinc-900 font-bold text-base mb-1'>No vehicle currently available</p>
+                                <p className='text-zinc-400 text-sm max-w-xs leading-relaxed'>No availability is being invented. Estimates below use the route distance and saved pricing.</p>
+                                {Object.entries(farePricing).length > 0 && (
+                                    <div className='mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3'>
+                                        {Object.entries(farePricing).map(([type, pricing]) => (
+                                            <div key={type} className='rounded-2xl border border-zinc-200 bg-white px-4 py-3'>
+                                                <p className='text-zinc-400 text-[10px] uppercase tracking-widest font-bold'>Estimated {VEHICLE_META[type]?.label ?? type}</p>
+                                                <p className='text-zinc-900 text-2xl font-black mt-1'>
+                                                    ₹{Math.round((pricing.baseFare ?? 0) + (pricing.pricePerKM ?? 0) * km)}
+                                                </p>
+                                                <p className='text-zinc-400 text-xs mt-1'>{km} km route</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => getNearByVehicles(pickUpLat, pickUpLon, vehicle)}
                                     className="mt-5 flex items-center gap-2 bg-zinc-900 text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-zinc-800 transition-colors"
                                 >
-                                    <RefreshCcw size={14} /> Retry Search
+                                        <RefreshCcw size={14} /> Retry Search
                                 </motion.button>
 
                             </motion.div>

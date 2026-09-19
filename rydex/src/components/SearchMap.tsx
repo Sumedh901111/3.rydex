@@ -72,6 +72,8 @@ const dropIcon = new L.DivIcon({
 
 function SearchMap({ pickUp, drop, onChange, onDistance }: props) {
 
+  const geoapifyApiKey = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY
+
   const [p1, setP1] = useState<[number, number]>()
   const [p2, setP2] = useState<[number, number]>()
   const [route, setRoute] = useState<[number, number][]>([])
@@ -79,6 +81,9 @@ function SearchMap({ pickUp, drop, onChange, onDistance }: props) {
   const [ready, setReady] = useState(false)
   const geoCoding = async (q: string): Promise<[number, number] | null> => {
     try {
+      if (!geoapifyApiKey) {
+        throw new Error("NEXT_PUBLIC_GEOAPIFY_API_KEY is not configured")
+      }
       const { data } = await axios.get("https://api.geoapify.com/v1/geocode/autocomplete", {
   params: {
     text: q.trim(),
@@ -91,12 +96,16 @@ function SearchMap({ pickUp, drop, onChange, onDistance }: props) {
       const [lon, lat] = data.features[0].geometry.coordinates
       return [lat, lon];
     } catch (error) {
-      console.log(error)
+      console.error("Geoapify geocoding failed", error)
       return null
     }
   }
 
   const reverseGeoCoding=async (lat:number,lon:number)=>{
+
+    if (!geoapifyApiKey) {
+      throw new Error("NEXT_PUBLIC_GEOAPIFY_API_KEY is not configured")
+    }
 
     const {data}=await axios.get("https://api.geoapify.com/v1/geocode/reverse",{
           params:{
@@ -176,6 +185,10 @@ function SearchMap({ pickUp, drop, onChange, onDistance }: props) {
         center={p1 ?? [0, 0]}
         zoom={13}
         zoomControl={false}
+        dragging={true}
+        scrollWheelZoom={true}
+        touchZoom={true}
+        doubleClickZoom={true}
       >
 
 

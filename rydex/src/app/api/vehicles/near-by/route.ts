@@ -14,6 +14,14 @@ export async function POST(req:NextRequest) {
             )
         }
 
+        const pricingVehicles = await Vehicle.find({
+            baseFare: { $exists: true, $ne: null },
+            pricePerKM: { $exists: true, $ne: null }
+        }).select("type baseFare pricePerKM waitingCharge").lean()
+        const pricing = Object.fromEntries(
+            pricingVehicles.map((pricingVehicle) => [pricingVehicle.type, pricingVehicle])
+        )
+
         const partners=await User.find({
             role:"partner",
             isOnline:true,
@@ -32,10 +40,7 @@ export async function POST(req:NextRequest) {
         const partnerIds=partners.map(p=>p._id)
 
         if(partnerIds.length==0){
-             return NextResponse.json(
-                 [],
-                {status:200}
-            )
+             return NextResponse.json({ vehicles: [], pricing }, {status:200})
         }
 
         const vehicles=await Vehicle.find({
@@ -46,9 +51,9 @@ export async function POST(req:NextRequest) {
         }).lean()
 
        return NextResponse.json(
-                vehicles,
+                { vehicles, pricing },
                 {status:200}
-            ) 
+            )
 
 
     } catch (error) {
