@@ -12,13 +12,26 @@ export async function GET(
 ) {
     try {
         const session = await auth()
-        if (!session || !session.user?.email || session.user.role !== "admin") {
-            return Response.json({ message: "unauthorized" }
-                , { status: 400 }
-            )
-        }
 
-        await connectDb()
+if (!session?.user?.email) {
+    return Response.json(
+        { message: "unauthorized" },
+        { status: 401 }
+    )
+}
+
+await connectDb()
+
+const adminUser = await User.findOne({
+    email: session.user.email
+}).select("role")
+
+if (!adminUser || adminUser.role !== "admin") {
+    return Response.json(
+        { message: "unauthorized" },
+        { status: 403 }
+    )
+}
         const partnerId=(await context.params).id
         const partner=await User.findById(partnerId)
 
