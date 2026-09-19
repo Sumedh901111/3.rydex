@@ -11,10 +11,28 @@ export async function requireAdmin() {
 
     await connectDb()
 
-    const adminUser = await User.findOne({ email: session.user.email }).select("_id role")
-    if (!adminUser || adminUser.role !== "admin") {
-        return { response: Response.json({ message: "forbidden" }, { status: 403 }) }
-    }
+    const adminUser = await User.findOne({
+    email: session.user.email
+}).select("_id email role")
 
+console.log("[ADMIN AUTH DEBUG]", {
+    sessionEmail: session.user.email,
+    dbEmail: adminUser?.email ?? null,
+    dbRole: adminUser?.role ?? null
+})
+
+if (!adminUser || adminUser.role !== "admin") {
+    return {
+        response: Response.json(
+            {
+                message: "forbidden",
+                sessionEmail: session.user.email,
+                dbEmail: adminUser?.email ?? null,
+                dbRole: adminUser?.role ?? null
+            },
+            { status: 403 }
+        )
+    }
+}
     return { user: adminUser }
 }
