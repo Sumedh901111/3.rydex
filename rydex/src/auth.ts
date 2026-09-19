@@ -48,45 +48,62 @@ Google({
     clientSecret:process.env.AUTH_GOOGLE_SECRET
 })
   ],
-  callbacks:{
-    async signIn({user,account}){
-      if(account?.provider=="google"){
-        await connectDb()
-        const dbUser=await User.findOne({email:user.email})
-        if(!dbUser){
-            await User.create({
-                name:user.name,
-                email:user.email
-            })
-        }
-    
-        user.id=dbUser._id
-        user.role=dbUser.role
+  callbacks: {
+  async signIn({ user, account }) {
+    if (account?.provider === "google") {
+      await connectDb()
+
+      let dbUser = await User.findOne({ email: user.email })
+
+      if (!dbUser) {
+        dbUser = await User.create({
+          name: user.name,
+          email: user.email,
+          role: "user",
+        })
       }
 
-      return true
-    },
-   async jwt({token,user}){
-    if(user){
-   token.name=user.name,
-      token.id=user.id,
-      token.email=user.email,
-      token.role=user.role
+      user.id = dbUser._id.toString()
+      user.role = dbUser.role
     }
-   return token
-   },
-   async session ({token,session}){
 
-    if(session.user){
-        session.user.name=token.name,
-        session.user.id=token.id as string,
-        session.user.email=token.email as string,
-        session.user.role=token.role as string
-    }
-    return session
-   }
-
+    return true
   },
+
+  async jwt({ token, user }) {
+    if (user) {
+      token.name = user.name
+      token.id = user.id
+      token.email = user.email
+      token.role = user.role
+    }
+
+    // Always get the latest role from MongoDB
+    if (token.email) {
+      await connectDb()
+      const dbUser = await User.findOne({ email: token.email })
+
+      if (dbUser) {
+        token.role = dbUser.role
+        token.id = dbUser._id.toString()
+        token.name = dbUser.name
+      }
+    }
+
+    return token
+  },
+
+  async session({ token, session }) {
+    if (session.user) {
+      session.user.name = token.name as string
+      session.user.id = token.id as string
+      session.user.email = token.email as string
+      session.user.role = token.role as string
+    }
+
+    return session
+  },
+},
   pages:{
     signIn:"/signin",
     error:"/signin"
