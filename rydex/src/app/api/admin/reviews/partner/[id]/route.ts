@@ -11,55 +11,65 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await auth()
+        const session = await auth();
 
-if (!session?.user?.email) {
-    return Response.json(
-        { message: "unauthorized" },
-        { status: 401 }
-    )
-}
-
-await connectDb()
-
-const adminUser = await User.findOne({
-    email: session.user.email
-}).select("role")
-
-if (!adminUser || adminUser.role !== "admin") {
-    return Response.json(
-        { message: "unauthorized" },
-        { status: 403 }
-    )
-}
-        const partnerId=(await context.params).id
-        const partner=await User.findById(partnerId)
-
-        if(!partner || partner.role!=="partner"){
+        if (!session?.user?.email) {
             return Response.json(
-                {message:"partner not found"},
-                {status:400}
-            )
+                { message: "unauthorized" },
+                { status: 401 }
+            );
         }
 
-        const vehicle=await Vehicle.findOne({owner:partnerId})
-        const documents=await PartnerDocs.findOne({owner:partnerId})
-         const bank=await PartnerBank.findOne({owner:partnerId})
+        await connectDb();
 
+        const adminUser = await User.findOne({
+            email: session.user.email
+        }).select("role");
 
-         return Response.json(
+        if (!adminUser || adminUser.role !== "admin") {
+            return Response.json(
+                { message: "unauthorized" },
+                { status: 403 }
+            );
+        }
+
+        const partnerId = (await context.params).id;
+
+        const partner = await User.findById(partnerId);
+
+        if (!partner || partner.role !== "partner") {
+            return Response.json(
+                { message: "partner not found" },
+                { status: 400 }
+            );
+        }
+
+        const vehicle = await Vehicle.findOne({
+            owner: partnerId
+        });
+
+        const documents = await PartnerDocs.findOne({
+            owner: partnerId
+        });
+
+        const bank = await PartnerBank.findOne({
+            owner: partnerId
+        });
+
+        return Response.json(
             {
                 partner,
-                vehicle:vehicle || null,
-                documents:documents || null,
-                bank:bank || null
+                vehicle: vehicle || null,
+                documents: documents || null,
+                bank: bank || null
             },
-            {status:200}
-         )
+            { status: 200 }
+        );
+
     } catch (error) {
-return Response.json(
-                {message:`partner get error ${error}`},
-                {status:500}
-            )
+        return Response.json(
+            { message: `partner get error ${error}` },
+            { status: 500 }
+        );
     }
 }
