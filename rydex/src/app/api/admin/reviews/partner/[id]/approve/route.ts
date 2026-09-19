@@ -1,4 +1,4 @@
-import { auth } from "@/auth"
+import { requireAdmin } from "@/lib/adminAuth"
 import connectDb from "@/lib/db"
 import PartnerBank from "@/models/partnerBank.model"
 import PartnerDocs from "@/models/partnerDocs.model"
@@ -6,16 +6,14 @@ import User from "@/models/user.model"
 
 import { NextRequest } from "next/server"
 
-export async function GET( 
+export async function GET(
     req: NextRequest,
     context: { params: Promise<{ id: string }>}) {
 
         try {
-              const session = await auth()
-        if (!session || !session.user?.email || session.user.role !== "admin") {
-            return Response.json({ message: "unauthorized" }
-                , { status: 400 }
-            )
+              const admin = await requireAdmin()
+        if (admin.response) {
+            return admin.response
         }
 
         await connectDb()
@@ -63,8 +61,8 @@ export async function GET(
             console.log(error)
            return Response.json(
            { message:`partner approved error ${error}`},{status:500}
-        ) 
+        )
         }
-      
+
 
 }

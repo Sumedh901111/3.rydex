@@ -1,5 +1,4 @@
-import { auth } from "@/auth";
-import connectDb from "@/lib/db";
+import { requireAdmin } from "@/lib/adminAuth";
 import PartnerBank from "@/models/partnerBank.model";
 import PartnerDocs from "@/models/partnerDocs.model";
 import User from "@/models/user.model";
@@ -11,26 +10,9 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        const session = await auth();
-
-        if (!session?.user?.email) {
-            return Response.json(
-                { message: "unauthorized" },
-                { status: 401 }
-            );
-        }
-
-        await connectDb();
-
-        const adminUser = await User.findOne({
-            email: session.user.email
-        }).select("role");
-
-        if (!adminUser || adminUser.role !== "admin") {
-            return Response.json(
-                { message: "unauthorized" },
-                { status: 403 }
-            );
+        const admin = await requireAdmin();
+        if (admin.response) {
+            return admin.response;
         }
 
         const partnerId = (await context.params).id;

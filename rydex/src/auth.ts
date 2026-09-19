@@ -4,7 +4,7 @@ import connectDb from "./lib/db"
 import User from "./models/user.model"
 import bcrypt from "bcryptjs"
 import Google from "next-auth/providers/google"
- 
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -20,7 +20,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       placeholder: "*****",
     },
   },
- async authorize(credentials, request) {
+ async authorize(credentials) {
       if(!credentials.email || !credentials.password){
         throw Error("missing credentials")
       }
@@ -36,7 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
          throw Error("incorrect Password")
       }
       return {
-        id:user._id,
+        id:user._id.toString(),
         name:user.name,
         email:user.email,
         role:user.role
@@ -78,7 +78,6 @@ Google({
       token.role = user.role
     }
 
-    // Always get the latest role from MongoDB
     if (token.email) {
       await connectDb()
       const dbUser = await User.findOne({ email: token.email })
@@ -87,6 +86,7 @@ Google({
         token.role = dbUser.role
         token.id = dbUser._id.toString()
         token.name = dbUser.name
+        token.email = dbUser.email
       }
     }
 
@@ -98,7 +98,7 @@ Google({
       session.user.name = token.name as string
       session.user.id = token.id as string
       session.user.email = token.email as string
-      session.user.role = token.role as string
+      session.user.role = token.role as "user" | "partner" | "admin"
     }
 
     return session
