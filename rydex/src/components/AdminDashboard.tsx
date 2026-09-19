@@ -9,6 +9,8 @@ import { AnimatePresence } from 'motion/react'
 import { motion } from "motion/react"
 import ContentList from './ContentList'
 import AdminEarning from './AdminEarning'
+import { signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 type Stats = {
   totalApprovedPartners: number
   totalPartners: number
@@ -18,6 +20,7 @@ type Stats = {
 
 type Tab = "partner" | "kyc" | "vehicle"
 function AdminDashboard() {
+  const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>("partner")
   const [partnerReviews, setPartnerReviews] = useState<any>()
@@ -55,9 +58,20 @@ function AdminDashboard() {
 
           </div>
 
-          <div className='flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-black text-white'>
-            <User size={14} />
-            Admin Dashboard
+          <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-black text-white'>
+              <User size={14} />
+              Admin Dashboard
+            </div>
+            <button
+              className='text-xs px-3 py-1.5 rounded-full border border-black/20 hover:bg-gray-100'
+              onClick={async () => {
+                await signOut({ redirect: false })
+                router.push("/")
+              }}
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>

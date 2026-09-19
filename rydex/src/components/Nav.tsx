@@ -12,6 +12,7 @@ import { signOut } from 'next-auth/react'
 import { setUserData } from '@/redux/userSlice'
 import axios from 'axios'
 import { getSocket } from '@/lib/socket'
+import GeoUpdater from './GeoUpdater'
 
 function Nav() {
     const pathName = usePathname()
@@ -26,6 +27,7 @@ function Nav() {
         await signOut({ redirect: false })
         dispatch(setUserData(null))
         setProfileOpen(false)
+        router.push("/")
     }
 
     const fetchCount=async ()=>{
@@ -76,8 +78,9 @@ function Nav() {
                                 <Link className="relative text-sm font-medium text-gray-300 hover:text-white transition" href={"/partner/bookings"}>Bookings</Link>
                                 <Link className="relative text-sm font-medium text-gray-300 hover:text-white transition" href={"/partner/active-ride"}>Active Ride</Link>
                             </>
-                        ) :
-                           null
+                        ) : userData?.role == "admin" ? (
+                            <Link className="relative text-sm font-medium text-gray-300 hover:text-white transition" href="/admin">Admin Dashboard</Link>
+                        ) : null
                         }
 
 
@@ -109,7 +112,14 @@ function Nav() {
                                                 <div className='p-5'>
                                                     <p className='font-semibold text-lg'>{userData.name}</p>
                                                     <p className='text-xs uppercase text-gray-500 mb-4'>{userData.role}</p>
-                       {userData.role != "partner" && (
+                       {userData.role == "admin" && (
+                                                        <div className='w-full flex items-center gap-3 pl-3 pb-3 pt-3 hover:bg-gray-100 rounded-xl' onClick={() => router.push("/admin")}>
+                                                            Admin Dashboard
+                                                            <ChevronRight size={16} className='ml-auto' />
+                                                        </div>
+                                                    )}
+
+                                                    {userData.role == "user" && (
                                                         <div className='w-full flex items-center gap-3 pl-3 pb-3 pt-3 hover:bg-gray-100 rounded-xl' onClick={() => router.push("/user/bookings")}>
                                                             Bookings
                                                             <ChevronRight size={16} className='ml-auto' />
@@ -117,7 +127,7 @@ function Nav() {
                                                     )
                                                     }
 
-                                                    {userData.role != "partner" && (
+                                                    {userData.role == "user" && (
                                                         <div className='w-full flex items-center gap-3 py-3 hover:bg-gray-100 rounded-xl' onClick={() => router.push("/partner/onboarding/vehicle")}>
                                                             <div className='flex -space-x-2'>
                                                                 <div className='w-6 h-6 rounded-full bg-black text-white flex items-center justify-center'> <Bike size={14} /></div>
@@ -178,7 +188,7 @@ function Nav() {
 
 
             </motion.div>
-            
+
             <AnimatePresence>
                 {profileOpen && userData && (
                     <>
@@ -200,14 +210,21 @@ function Nav() {
                                 <p className='font-semibold text-lg'>{userData.name}</p>
                                 <p className='text-xs uppercase text-gray-500 mb-4'>{userData.role}</p>
 
-                                 {userData.role != "partner" && (
+                                 {userData.role == "admin" && (
+                                    <div className='w-full flex items-center gap-3 pt-3 pb-3 pl-3 hover:bg-gray-100 rounded-xl' onClick={() => router.push("/admin")}>
+                                        Admin Dashboard
+                                        <ChevronRight size={16} className='ml-auto' />
+                                    </div>
+                                )}
+
+                                {userData.role == "user" && (
                                     <div className='w-full flex items-center gap-3 pt-3 pb-3 pl-3 py-0 hover:bg-gray-100 rounded-xl' onClick={() => router.push("/user/bookings")}>
                                      Bookings
                                         <ChevronRight size={16} className='ml-auto' />
                                     </div>
                                 )
                                 }
-                                {userData.role != "partner" && (
+                                {userData.role == "user" && (
                                     <div className='w-full flex items-center gap-3 py-3 hover:bg-gray-100 rounded-xl' onClick={() => router.push("/partner/onboarding/vehicle")}>
                                         <div className='flex -space-x-2'>
                                             <div className='w-6 h-6 rounded-full bg-black text-white flex items-center justify-center'> <Bike size={14} /></div>
@@ -242,6 +259,7 @@ function Nav() {
                     </>
                 )}
             </AnimatePresence>
+            <GeoUpdater userId={userData?._id?.toString() ?? ""} />
             <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
         </>
     )

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import axios from 'axios'
 
 import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 type propType = {
     open: boolean,
     onClose: () => void
@@ -21,6 +22,7 @@ function AuthModal({ open, onClose }: propType) {
     const [otp, setOtp] = useState(["", "", "", "", "", ""])
 
     const session = useSession()
+    const router = useRouter()
     console.log(session)
     const handleSignUp = async () => {
         setLoading(true)
@@ -59,13 +61,19 @@ function AuthModal({ open, onClose }: propType) {
             email, password, redirect: false
         })
         setLoading(false)
-        console.log(res)
+        if (res?.error) {
+            setErr(res.error)
+            return
+        }
+
+        onClose()
+        router.push("/auth-redirect")
 
     }
 
     const handleGoogleLogin = async () => {
         await signIn("google",{
-            callbackUrl:"/"
+            callbackUrl:"/auth-redirect"
         })
     }
 
@@ -192,8 +200,8 @@ function AuthModal({ open, onClose }: propType) {
 
                                             <div className='mt-6 flex justify-between gap-2'>
                                               {otp.map((digit,i)=>(
-                                                <input 
-                                                key={i} 
+                                                <input
+                                                key={i}
                                                 id={`otp-${i}`}
                                                 value={digit}
                                                 maxLength={1}
@@ -203,12 +211,12 @@ function AuthModal({ open, onClose }: propType) {
                             border border-black/20
                             outline-none'
                             onChange={(e)=>handleChangeOtp(i,e.target.value)}
-                                            
+
                                             />
-                                            
+
                                               ))}
                                             </div>
-                                            
+
                                                 {err && <p className='text-red-500 '>*{err}</p>}
                                             <button className='mt-6 w-full h-11 rounded-xl bg-black text-white font-semibold hover:bg-gray-900 flex justify-center items-center transition' onClick={handleVerifyEmail}>{!loading ? "Verify OTP and Create Account" : <CircleDashed size={18} color='white' className='animate-spin' />}</button>
 

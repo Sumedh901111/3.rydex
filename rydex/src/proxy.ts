@@ -31,15 +31,22 @@ export async function proxy(req: NextRequest) {
     const role = session.user?.role
 
     if (pathname.startsWith("/admin")) {
-    return NextResponse.next()
-}
-    if (pathname.startsWith("/partner")) {
-         if(pathname.startsWith("/partner/onboarding")){
-              return NextResponse.next()
-         }
-        if (role != "partner") {
+        if (role !== "admin") {
             return NextResponse.redirect(new URL("/", req.url))
         }
+        return NextResponse.next()
+}
+    if (pathname.startsWith("/partner")) {
+        if (pathname.startsWith("/partner/onboarding") && role !== "admin") {
+            return NextResponse.next()
+        }
+        if (role !== "partner") {
+            return NextResponse.redirect(new URL("/", req.url))
+        }
+    }
+
+    if (pathname.startsWith("/user") && role !== "user") {
+        return NextResponse.redirect(new URL("/", req.url))
     }
 
     if (pathname.startsWith("/api")) {
