@@ -67,7 +67,7 @@ function Nav() {
         shadow-[0_15px_50px_rgba(0,0,0,0.7)] py-3`}
             >
                 <div className='max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between'>
-                    <Image src={"/logo.png"} alt='logo' width={44} height={44} priority />
+                    <Image src={"/pogo.png"} alt='RideSync logo' width={128} height={44} priority className='object-contain' />
                     <div className='hidden md:flex items-center gap-10'>
 
                         {userData?.role == "partner" ? (
