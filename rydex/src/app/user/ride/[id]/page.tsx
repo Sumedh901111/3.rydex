@@ -7,9 +7,11 @@ import { Car, ChevronUp, Zap } from 'lucide-react'
 import dynamic from 'next/dynamic'
 const LiveRideMap=dynamic(() => import("@/components/LiveRideMap"), { ssr: false })
 import PanelContent from '@/components/PanelContent'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { getSocket } from '@/lib/socket'
 import CompletedScreen from '@/components/CompletedScreen'
+
+const isValidObjectId = (value: string) => /^[0-9a-fA-F]{24}$/.test(value)
 
 
 const MAP_STATUS: Record<BookingStatus, "arriving" | "ongoing" | "completed"> = {
@@ -57,28 +59,40 @@ function page() {
     const [status, setStatus] = useState("")
     const [chatOpen, setChatOpen] = useState(false)
     const [expanded, setExpanded] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    const {id}=useParams()
+    const router = useRouter()
+    const { id } = useParams<{ id: string }>()
+    const bookingId = typeof id === "string" ? id : ""
+    const validBookingId = bookingId ? isValidObjectId(bookingId) : false
+
     useEffect(() => {
         async function fetch() {
+            if (!bookingId || !validBookingId) {
+                setLoading(false)
+                setError("Invalid ride ID. Please check the booking link and try again.")
+                return
+            }
+
             setLoading(true)
+            setError(null)
             try {
-                const { data } = await axios.post("/api/user/active-ride",{
-                    bookingId:id
+                const { data } = await axios.post("/api/user/active-ride", {
+                    bookingId
                 })
                 setBooking(data)
-                console.log(data)
                 setStatus(data.bookingStatus)
                 setPickUpPos([data.pickUpLocation.coordinates[1], data.pickUpLocation.coordinates[0]])
                 setDropPos([data.dropLocation.coordinates[1], data.dropLocation.coordinates[0]])
                 setLoading(false)
             } catch (error: any) {
-                console.log(error.response.data.message)
+                const message = error?.response?.data?.message || "This ride could not be loaded."
+                setError(message)
                 setLoading(false)
             }
         }
         fetch()
-    }, [])
+    }, [bookingId, validBookingId])
 
     const onChatToggle = () => {
         setChatOpen(prev => !prev)
@@ -107,7 +121,25 @@ function page() {
                 </div>
             </div>)
     }
-
+    if (error) {
+        return (
+            <div className='h-screen w-full bg-zinc-100 flex items-center justify-center px-4'>
+                <div className='max-w-md w-full bg-white border border-zinc-200 rounded-3xl p-8 text-center shadow-sm'>
+                    <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600'>
+                        <Car className='h-7 w-7' />
+                    </div>
+                    <h1 className='text-2xl font-black text-zinc-900'>Ride not found</h1>
+                    <p className='mt-3 text-sm text-zinc-500'>{error}</p>
+                    <button
+                        onClick={() => router.push('/user/bookings')}
+                        className='mt-6 inline-flex items-center justify-center rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-black'
+                    >
+                        Back to bookings
+                    </button>
+                </div>
+            </div>
+        )
+    }
      if(status==="completed" && booking){
             return (
                 <CompletedScreen booking={booking} role='user'/>
