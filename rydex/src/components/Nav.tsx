@@ -58,8 +58,9 @@ function Nav() {
     return (
         <>
             <motion.div
-                initial={{ y: -60, opacity: 0 }}
+                initial={{ y: 0, opacity: 1 }}
                 animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0 }}
                 className={`fixed top-3 left-1/2 -translate-x-1/2
         w-[94%] md:w-[86%]
         z-50 rounded-full bg-[#0B0B0B] text-white
